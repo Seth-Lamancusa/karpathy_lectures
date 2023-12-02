@@ -7,7 +7,7 @@ visualize_loss = False
 
 if __name__ == "__main__":
     # load the data
-    words = open("names.txt", "r").read().splitlines()
+    words = open("makemore/names.txt", "r").read().splitlines()
 
     chars = ["."] + sorted(list(set("".join(words))))
     stoi = {s: i for i, s in enumerate(chars)}
@@ -18,41 +18,45 @@ if __name__ == "__main__":
         for i, (s1, s2) in enumerate([(s1, s2) for s1 in chars for s2 in chars])
     }
     itoss = {i: (s1, s2) for (s1, s2), i in sstoi.items()}
-    print(itoss)
+    for k, v in itoss.items()[0:10]:
+        print(k, v)
 
-    # # create the dataset
-    # xs, ys = [], []
-    # for w in words:
-    #     chs = ["."] + list(w) + ["."]
-    #     for ch1, ch2 in zip(chs, chs[1:]):
-    #         ix1 = stoi[ch1]
-    #         ix2 = stoi[ch2]
-    #         xs.append(ix1)
-    #         ys.append(ix2)
-    # xs = torch.tensor(xs)
-    # ys = torch.tensor(ys)
-    # num = xs.nelement()
-    # print("Number of examples: ", num)
+    # create the dataset
+    xs, ys = [], []
+    for w in words:
+        chs = ["."] + list(w) + ["."]
+        for (ch1, ch2), ch3 in zip(zip(chs, chs[1:]), chs[2:]):
+            ix1 = stoi[ch1]
+            ix2 = stoi[ch2]
+            ix3 = stoi[ch3]
+            xs.append((ix1, ix2))
+            ys.append(ix3)
+    for x, y in list(zip(xs, ys))[0:10]:
+        print(f"({itos[x[0]]}, {itos[x[1]]}): {itos[y]}")
+    xs = torch.tensor(xs)
+    ys = torch.tensor(ys)
+    num = xs.nelement()
+    print("Number of examples: ", num)
 
-    # # initialize the 'network'
-    # g = torch.Generator().manual_seed(2147483647)
-    # W = torch.randn((27, 27), generator=g, requires_grad=True)
+    # initialize the 'network'
+    g = torch.Generator().manual_seed(2147483647)
+    W = torch.randn((27, 27), generator=g, requires_grad=True)
 
-    # batches = torch.arange(0, 500, 1)
-    # losses = []
+    batches = torch.arange(0, 100, 1)
+    losses = []
 
-    # xenc = F.one_hot(
-    #     xs, num_classes=27
-    # ).float()  # input to the network: one-hot encoding
-    # for _ in batches:
-    #     # forward pass
-    #     logits = xenc @ W  # predict log-counts
-    #     counts = logits.exp()  # counts, allegedly equivalent to N from symbolic bigram
-    #     probs = counts / counts.sum(
-    #         1, keepdims=True
-    #     )  # probabilities for next character
-    #     loss = -probs[torch.arange(num), ys].log().mean()
-    #     losses.append(loss.item())
+    xenc = F.one_hot(
+        xs, num_classes=num
+    ).float()  # input to the network: one-hot encoding
+    for _ in batches:
+        # forward pass
+        logits = xenc @ W  # predict log-counts
+        counts = logits.exp()  # counts, allegedly equivalent to N from symbolic bigram
+        probs = counts / counts.sum(
+            1, keepdims=True
+        )  # probabilities for next character
+        loss = -probs[torch.arange(num), ys].log().mean()
+        losses.append(loss.item())
 
     #     # backward pass
     #     W.grad = None  # set to zero the gradient
