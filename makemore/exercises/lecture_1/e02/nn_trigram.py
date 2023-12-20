@@ -6,7 +6,7 @@ visualize_loss = True
 
 if __name__ == "__main__":
     # load the data
-    words = open("makemore/names.txt", "r").read().splitlines()
+    words = open("makemore/train.txt", "r").read().splitlines()
 
     chars = ["."] + sorted(list(set("".join(words))))
     stoi = {s: i for i, s in enumerate(chars)}
@@ -71,18 +71,29 @@ if __name__ == "__main__":
         print(f"Batch {len(losses)}: loss = {loss.item()}")
 
     # evaluate on test set
-    words = open("makemore/exercises/lecture_1/e02/test.txt", "r").read().splitlines()
+    words = open("makemore/train.txt", "r").read().splitlines()
+
+    chars = ["."] + sorted(list(set("".join(words))))
+    stoi = {s: i for i, s in enumerate(chars)}
+    itos = {i: s for s, i in stoi.items()}
+
+    sstoi = {
+        (s1, s2): i
+        for i, (s1, s2) in enumerate([(s1, s2) for s1 in chars for s2 in chars])
+    }
+    itoss = {i: (s1, s2) for (s1, s2), i in sstoi.items()}
+
+    # create the dataset
     xs, ys = [], []
     for w in words:
         chs = ["."] + list(w) + ["."]
-        for ch1, ch2 in zip(chs, chs[1:]):
-            ix1 = stoi[ch1]
-            ix2 = stoi[ch2]
+        for (ch1, ch2), ch3 in zip(zip(chs, chs[1:]), chs[2:]):
+            ix1 = sstoi[(ch1, ch2)]
+            ix2 = stoi[ch3]
             xs.append(ix1)
             ys.append(ix2)
     xs = torch.tensor(xs)
     ys = torch.tensor(ys)
-    num = xs.nelement()
 
     xenc = F.one_hot(
         xs, num_classes=len(itoss)
@@ -93,6 +104,4 @@ if __name__ == "__main__":
     loss = -probs[torch.arange(num), ys].log().mean() + 0.01 * (W**2).mean()
     print(f"Test loss: {loss.item()}")
 
-    # The test loss is significantly worse than the training loss, which could indicate overfitting. It makes
-    # some intuitive sense that this is the case for the trigram model, but not the bigram, since there are probably
-    # many unseen trigrams in the test set.
+    # Dunno what's wrong, gonna play Trackmania and come back to it tomorrow

@@ -7,7 +7,7 @@ visualize_loss = False
 
 if __name__ == "__main__":
     # load data from training set
-    words = open("makemore/exercises/lecture_1/e02/train.txt", "r").read().splitlines()
+    words = open("makemore/train.txt", "r").read().splitlines()
 
     chars = sorted(list(set("".join(words))))
     stoi = {s: i + 1 for i, s in enumerate(chars)}
@@ -57,7 +57,7 @@ if __name__ == "__main__":
         print(f"Batch {len(losses)}: loss = {loss.item()}")
 
     # evaluate on test set
-    words = open("makemore/exercises/lecture_1/e02/test.txt", "r").read().splitlines()
+    words = open("makemore/test.txt", "r").read().splitlines()
     xs, ys = [], []
     for w in words:
         chs = ["."] + list(w) + ["."]
